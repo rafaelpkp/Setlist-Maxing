@@ -23,10 +23,12 @@ difference. Lower means the songs are more similar:
 
 If either song is missing a valid feature, leave that feature out and adjust the
 weights based on what's left. BPM needs to be positive and energy needs to be
-0–1. If none of the features can
-be compared, the score is 0. If songs tie, pick the first one encountered
-among the remaining songs.
+0–1. If neither feature can be compared, the transition is unknown. We'll
+prefer songs with a known transition score; if all the remaining transitions
+are unknown, we'll pick the first one. If known scores tie, pick the first one
+encountered among the remaining songs.
 
 These weights are just a starting point. We'll need to try the results and see
-if the transitions sound good. The current code only checks whether songs fit;
-the validation, duplicate check, and ordering still need to be added.
+if the transitions sound good. The current generator selects valid songs that
+fit, skips duplicate IDs, and orders the selected songs. We still need to test
+it with more cases.

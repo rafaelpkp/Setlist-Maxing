@@ -23,7 +23,7 @@ double transitionScore(const Song& current, const Song& next) {
     }
 
     if (totalWeight == 0.0) {
-        return 0.0; // Neither feature can be compared.
+        return -1; // Neither feature can be compared.
     }
 
     return totalScore / totalWeight;
@@ -59,7 +59,9 @@ Setlist generateSetlist(const vector<Song>& repertoire, long long maxDurationMs)
         size_t bestIndex = i +1;
 
         for (size_t j = i + 2; j < result.songs.size(); j++) {
-            if (transitionScore(result.songs[i], result.songs[j]) < transitionScore(result.songs[i], result.songs[bestIndex])) {
+            double candidateScore = transitionScore(result.songs[i], result.songs[j]);
+            double bestScore = transitionScore(result.songs[i], result.songs[bestIndex]);
+            if (candidateScore >= 0 && (bestScore < 0 || candidateScore < bestScore)) {
                 bestIndex = j;
             }
         }

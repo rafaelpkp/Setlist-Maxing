@@ -33,6 +33,25 @@ if the transitions sound good. The current generator selects valid songs that
 fit, skips duplicate IDs, and orders the selected songs. We still need to test
 it with more cases.
 
+## building and running
+
+You'll need CMake, a C++17 compiler, and a build tool such as Ninja. From the
+repository root, configure and build with:
+
+```sh
+cmake -S backend -B backend/build -G Ninja -DCMAKE_BUILD_TYPE=Debug
+cmake --build backend/build
+```
+
+Run `./backend/build/setlist.exe` on Windows (or `./backend/build/setlist` on
+other systems). To run the tests from the repository root:
+
+```sh
+ctest --test-dir backend/build --output-on-failure
+```
+
+Use a debug build when running the tests so their `assert` checks stay enabled.
+
 ## proposed way to connect everything
 
 Albert and Rafael, here's a starting idea for how the tree and hash table can

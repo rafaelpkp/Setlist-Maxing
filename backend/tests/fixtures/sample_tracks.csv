@@ -1,0 +1,6 @@
+id,name,popularity,duration_ms,explicit,artists,id_artists,release_date,danceability,energy,key,loudness,mode,speechiness,acousticness,instrumentalness,liveness,valence,tempo,time_signature
+sample01,Midnight Drive,65,210000,0,['The Satellites'],['artist01'],2020-05-01,0.72,0.65,2,-8.1,1,0.04,0.18,0.0,0.12,0.55,120.0,4
+sample02,"Stay, Stay",52,185000,0,"['June Reed', 'The Satellites']","['artist02', 'artist01']",2019-10-12,0.63,0.48,7,-10.2,1,0.05,0.42,0.0,0.15,0.68,105.5,4
+sample03,"Say ""Hello""",43,245000,0,['June Reed'],['artist02'],2021-02-14,0.58,0.82,9,-6.4,0,0.06,0.12,0.02,0.21,0.39,145.0,4
+sample04,Quiet Morning,30,172000,0,['Northbound'],['artist03'],2018-07-20,0.45,0.25,0,-15.0,1,0.03,0.88,0.35,0.10,0.42,82.0,3
+sample05,Last Light,71,231000,0,['The Satellites'],['artist01'],2022-11-04,0.67,0.77,4,-7.2,0,0.05,0.22,0.0,0.18,0.60,132.0,4

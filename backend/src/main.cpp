@@ -2,6 +2,7 @@
 #include<vector>
 #include "Song.h"
 #include "SetlistGenerator.h"
+#include "RedBlackTree.h"
 
 using namespace std;
 
@@ -44,7 +45,19 @@ int main() {
         cout << "Duration: " << song.durationMs / 1000 << " seconds\n";
     }
 
-    Setlist setlist = generateSetlist(repertoire, 1000000);
+    RedBlackTree library;
+    for (const auto& song : repertoire) {
+        library.insert(song);
+    }
+
+    vector<Song> selectedSongs;
+    for (const auto& selected : repertoire) {
+        Song song;
+        if (library.find(selected.id, song)) {
+            selectedSongs.push_back(song);
+        }
+    }
+    Setlist setlist = generateSetlist(selectedSongs, 1000000);
     cout << "\nGenerated Setlist:\n";
     for (const auto& song : setlist.songs) {
         cout << song.title << " by " << song.artists << '\n';

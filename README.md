@@ -31,6 +31,31 @@ These weights are just a starting point. We'll need to try the results and see
 if the transitions sound good. The current code only checks whether songs fit;
 the validation, duplicate check, and ordering still need to be added.
 
+## red-black tree
+
+`RedBlackTree` is declared in `backend/include/RedBlackTree.h` and implemented in
+`RedBlackTree.cpp`. Include `RedBlackTree.h` and link the `song_tree` CMake target.
+It stores complete `Song` records ordered by Spotify track ID and supports
+the four operations below. This is a left-leaning red-black tree: rotations
+and color changes maintain a black root, prevent adjacent red nodes, and
+keep the same number of black nodes on every path to an empty child.
+Duplicate insertion leaves the original song
+unchanged; a failed lookup leaves the output argument unchanged. Insert,
+lookup, and removal take O(log n) time; size takes O(1). Nodes are owned by
+the tree and released automatically. Trees cannot be copied.
+
+After loading songs, insert them into a `RedBlackTree`, look up selected IDs
+with `find`, and pass the resulting `vector<Song>` to `generateSetlist`.
+Title/artist search and benchmarking are separate future work.
+
+Build and run the red-black tree tests with:
+
+```sh
+cmake -S . -B build
+cmake --build build
+ctest --test-dir build --output-on-failure
+```
+
 ## proposed way to connect everything
 
 Albert and Rafael, here's a starting idea for how the tree and hash table can

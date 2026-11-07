@@ -1,86 +1,66 @@
+# The Best Setlist
 
+Search a catalog of songs, build a repertoire, and generate a setlist for the
+time you have. You can also compare a hash table and red-black tree using the
+same songs.
 
-## Setlist idea
+## Setup
 
-The user picks songs for their repertoire and enters how long they have to
-play. For now, we'll go through the songs in that order and add each one if it
-fits. We'll skip songs with no ID or an invalid duration, and only use each ID
-once. If the time limit is zero or less, or nothing fits, the setlist is empty.
-The total can be under the limit, but it should never go over.
+You'll need CMake 3.24 or newer, a C++17 compiler, Ninja, Node.js (18, 20, or
+22+), and npm. The first CMake configuration downloads Crow and Asio.
 
-This won't always fill the time as closely as possible because the order of
-the repertoire matters. We can improve that later.
+Download `tracks.csv` from the [Spotify dataset](https://www.kaggle.com/datasets/yamaerenay/spotify-dataset-19212020-600k-tracks?select=tracks.csv)
+and put it in a `data` folder in the repo root. The full dataset isn't included
+in the repo.
 
-To order the songs, we'll keep the first selected song as the opener. Then
-we'll compare it to the remaining songs and pick the one with the lowest
-transition score. We'll repeat that until every song is in the setlist.
-
-For a first try, the score will be 50% BPM difference and 50% energy
-difference. Lower means the songs are more similar:
-
-- BPM: divide the difference by 50 and cap it at 1.
-- Energy: use the difference between the two values, which range from 0 to 1.
-
-If either song is missing a valid feature, leave that feature out and adjust the
-weights based on what's left. BPM needs to be positive and energy needs to be
-0–1. If neither feature can be compared, the transition is unknown. We'll
-prefer songs with a known transition score; if all the remaining transitions
-are unknown, we'll pick the first one. If known scores tie, pick the first one
-encountered among the remaining songs.
-
-These weights are just a starting point. We'll need to try the results and see
-if the transitions sound good. The current generator selects valid songs that
-fit, skips duplicate IDs, and orders the selected songs. We still need to test
-it with more cases.
-
-## building and running
-
-You'll need CMake, a C++17 compiler, and a build tool such as Ninja. From the
-repository root, configure and build with:
+From the repo root, build and run the backend:
 
 ```sh
 cmake -S backend -B backend/build -G Ninja -DCMAKE_BUILD_TYPE=Debug
 cmake --build backend/build
+./backend/build/setlist_server data/tracks.csv
 ```
 
-Run `./backend/build/setlist.exe` on Windows (or `./backend/build/setlist` on
-other systems). To run the tests from the repository root:
+On Windows, use `backend\build\setlist_server.exe data\tracks.csv` for the last
+command. For a quick test without the full dataset, use
+`backend/tests/fixtures/sample_tracks.csv` instead of `data/tracks.csv`.
+
+In a second terminal, start the frontend:
+
+```sh
+cd frontend
+npm install
+npm run dev
+```
+
+Open the local URL Vite prints, usually `http://localhost:5173`. Keep both
+terminals open while using the app. Press Ctrl+C in each terminal to stop it.
+
+## How it works
+
+The server loads each unique song into both structures, keyed by Spotify ID.
+Title and artist searches scan a separate list to find matching IDs; the
+selected structure then retrieves the songs. The same structure retrieves your
+chosen songs when generating a setlist.
+
+The generator adds songs in the order you picked them, skipping anything that
+won't fit. It keeps the first song as the opener and orders the rest using BPM
+and energy. Each gets equal weight when both are available. This is a simple
+approach, so it won't always fill the time as closely as possible. Your
+repertoire isn't saved when you refresh the page.
+
+The comparison runs insertion, exact ID lookup, and deletion on fresh copies of
+the full catalog. Times can vary, so repeat runs in a release build when
+comparing results. The storage estimate counts the structures and their reserved
+song slots or nodes, but leaves out separately allocated strings and allocator
+overhead; it isn't total process memory.
+
+## Tests
+
+From the repo root, run:
 
 ```sh
 ctest --test-dir backend/build --output-on-failure
 ```
 
-Use a debug build when running the tests so their `assert` checks stay enabled.
-
-## proposed way to connect everything
-
-Albert and Rafael, here's a starting idea for how the tree and hash table can
-connect to the rest of the project. We should agree on this together before
-changing your implementations.
-
-Both structures would store the same `Song` objects from `Song.h`, using the
-Spotify track ID as the unique key. Could both offer these public operations?
-
-```cpp
-bool insert(const Song& song);
-bool find(const string& id, Song& song) const;
-bool erase(const string& id);
-size_t size() const;
-```
-
-The idea is that `insert` returns false for an existing ID and leaves that song
-unchanged. `find` copies the song into the output argument and returns true if
-it exists; otherwise it returns false and leaves the argument unchanged.
-`erase` returns whether a song was removed, and `size` returns the number of
-songs currently stored. The signatures are a proposal, so let me know if a
-different approach works better with your code.
-
-The loader can read the CSV into a `vector<Song>`, and we'll insert the same
-records into both structures. For setlist generation, the backend can look up
-the chosen IDs in either structure, put the results into a `vector<Song>`, and
-pass that to the shared generator. The generator doesn't need to know which
-structure the songs came from.
-
-We'll still need a plan for searching by title or artist: looking up an ID alone
-doesn't do that. We should also agree on who handles search and benchmarking,
-and run both structures through the same workloads for the comparison.
+Use a debug build for the tests so their `assert` checks stay enabled.

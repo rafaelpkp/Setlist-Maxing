@@ -1,29 +1,55 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.24)
 project(SetlistMaxing LANGUAGES CXX)
-
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-
 add_library(setlist_core
     src/SetlistGenerator.cpp
     src/SongLoader.cpp
+    src/HashTable.cpp
+    src/RedBlackTree.cpp
+    src/SongLibrary.cpp
+    src/Benchmark.cpp
 )
 target_include_directories(setlist_core PUBLIC include)
-
 add_executable(setlist src/main.cpp)
 target_link_libraries(setlist PRIVATE setlist_core)
-
+option(BUILD_SERVER "Build the Crow HTTP server" ON)
+if(BUILD_SERVER)
+    include(FetchContent)
+    FetchContent_Declare(asio URL https://github.com/chriskohlhoff/asio/archive/refs/tags/asio-1-30-2.tar.gz DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
+    FetchContent_MakeAvailable(asio)
+    FetchContent_Declare(crow URL https://github.com/CrowCpp/Crow/archive/refs/tags/v1.2.1.2.tar.gz DOWNLOAD_EXTRACT_TIMESTAMP TRUE SOURCE_SUBDIR unused)
+    FetchContent_MakeAvailable(crow)
+    add_executable(setlist_server src/server.cpp src/ApiRoutes.cpp)
+    target_include_directories(setlist_server PRIVATE ${crow_SOURCE_DIR}/include ${asio_SOURCE_DIR}/asio/include)
+    target_compile_definitions(setlist_server PRIVATE ASIO_STANDALONE)
+    target_link_libraries(setlist_server PRIVATE setlist_core)
+    if(WIN32)
+        target_link_libraries(setlist_server PRIVATE ws2_32 mswsock)
+    else()
+        find_package(Threads REQUIRED)
+        target_link_libraries(setlist_server PRIVATE Threads::Threads)
+    endif()
+endif()
 include(CTest)
 if(BUILD_TESTING)
     add_executable(setlist_tests tests/SetListGeneratorTests.cpp)
     target_link_libraries(setlist_tests PRIVATE setlist_core)
     add_test(NAME setlist_tests COMMAND setlist_tests)
-
     add_executable(song_loader_tests tests/SongLoaderTests.cpp)
     target_link_libraries(song_loader_tests PRIVATE setlist_core)
     add_test(NAME song_loader_tests COMMAND song_loader_tests)
-    set_tests_properties(song_loader_tests PROPERTIES
-        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.."
-    )
+    set_tests_properties(song_loader_tests PROPERTIES WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/..")
+    add_executable(structure_integration_tests tests/StructureIntegrationTests.cpp)
+    target_link_libraries(structure_integration_tests PRIVATE setlist_core)
+    add_test(NAME structure_integration_tests COMMAND structure_integration_tests)
+    set_tests_properties(structure_integration_tests PROPERTIES WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/..")
+    add_executable(benchmark_tests tests/BenchmarkTests.cpp)
+    target_link_libraries(benchmark_tests PRIVATE setlist_core)
+    add_test(NAME benchmark_tests COMMAND benchmark_tests)
+    set_tests_properties(benchmark_tests PROPERTIES WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/..")
+    add_executable(red_black_tree_tests tests/RedBlackTreeTests.cpp)
+    target_link_libraries(red_black_tree_tests PRIVATE setlist_core)
+    add_test(NAME red_black_tree_tests COMMAND red_black_tree_tests)
 endif()
